@@ -4,4 +4,5 @@ settings.py
 .idea/
 enb/
 .DS_Store
-__pycahe__/
+__pycache__/
+env/

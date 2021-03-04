@@ -1,56 +1,9 @@
-import logging
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters
+from handlers import greet_user, guess_number, send_cat_picture, user_coordinats, talk_to_me
+import logging
 import settings
-from random import randint, choice
-from glob import glob
-from emoji import emojize
 
 logging.basicConfig(filename='bot.log', level=logging.INFO)
-
-def greet_user(update, context):
-    print('Вызван /start')
-    context.user_data[1] = get_smile(context.user_data)
-    update.message.reply_text(f'Hello user{context.user_data[1]}!')
-
-def talk_to_me(update, context):
-    context.user_data[1] = get_smile(context.user_data)
-    text = update.message.text
-    print(text)
-    update.message.reply_text(f'{text}{context.user_data[1]}')
-
-def get_smile(user_data):
-    if 1 not in user_data:
-        smile = choice(settings.USER_EMOJI)
-        return emojize(smile, use_aliases=True)
-    return user_data[1]
-
-def send_cat_picture(update, context):
-    cat_photos_list = glob('images/cat*.jpg')
-    cat_pic_filename = choice(cat_photos_list)
-    chat_id = update.effective_chat.id
-    context.bot.send_photo(chat_id=chat_id, photo=open(cat_pic_filename, 'rb'))
-
-def play_random_numbers(user_number):
-    my_number = randint(user_number - 10, user_number + 10)
-    if user_number > my_number:
-        message = f'Ты загадал {user_number}, я загадал {my_number}, ты победил!'
-    elif user_number == my_number:
-        message = f'Ты загадал {user_number}, я загадал {my_number}, ничья!'
-    else:
-        message = f'Ты загадал {user_number}, я загадал {my_number}, я победил!'
-    return message
-
-def guess_number(update, context):
-    print(context.args)
-    if context.args:
-        try:
-            user_number = int(context.args[0])
-            message = play_random_numbers(user_number)
-        except (TypeError, ValueError):
-            message = 'Введите целое число'
-    else:
-        message = 'Введите число'
-    update.message.reply_text(message)
 
 def main():
     mybot = Updater(settings.API_KEY, use_context=True)
@@ -59,6 +12,8 @@ def main():
     dp.add_handler(CommandHandler('start', greet_user))
     dp.add_handler(CommandHandler('guess', guess_number))
     dp.add_handler(CommandHandler('cat', send_cat_picture))
+    dp.add_handler(MessageHandler(Filters.regex('^(Прислать Чувака)$'), send_cat_picture))
+    dp.add_handler(MessageHandler(Filters.location, user_coordinats))
     dp.add_handler(MessageHandler(Filters.text, talk_to_me))
 
     logging.info('Bot started')
